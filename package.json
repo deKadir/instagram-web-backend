@@ -19,9 +19,12 @@
   },
   "homepage": "https://github.com/deKadir/instagram-web-backend#readme",
   "dependencies": {
+    "bcrypt": "^5.0.1",
     "dotenv": "^16.0.0",
     "esm": "^3.2.25",
     "express": "^4.17.3",
+    "express-async-error-wrapper": "^1.0.4",
+    "jsonwebtoken": "^8.5.1",
     "mongoose": "^6.2.3"
   },
   "devDependencies": {
