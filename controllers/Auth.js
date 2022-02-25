@@ -14,9 +14,13 @@ export const login = asyncErrorWrapper(async (req, res, next) => {
       next(new Error(err.message));
     } else {
       if (result) {
-        let token = jwt.sign({ data: user.id }, process.env.JWT_SECRET, {
-          expiresIn: process.env.JWT_EXPIRE,
-        });
+        let token = jwt.sign(
+          { data: { id: user.id } },
+          process.env.JWT_SECRET,
+          {
+            expiresIn: process.env.JWT_EXPIRE,
+          }
+        );
         res.status(200).json({
           error: false,
           message: "login succeed",
@@ -46,7 +50,7 @@ export const register = asyncErrorWrapper(async (req, res, next) => {
     }).catch((error) => {
       next(new Error(error.message, error.code));
     });
-    let token = jwt.sign({ data: user.id }, process.env.JWT_SECRET, {
+    let token = jwt.sign({ data: { id: user.id } }, process.env.JWT_SECRET, {
       expiresIn: process.env.JWT_EXPIRE,
     });
     res.status(201).json({

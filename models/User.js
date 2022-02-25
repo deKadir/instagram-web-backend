@@ -10,11 +10,13 @@ const UserSchema = new Schema({
     type: String,
     unique: true,
     sparse: true,
+    select: false,
   },
   email: {
     type: String,
     unique: true,
     sparse: true,
+    select: false,
   },
   username: {
     type: String,
@@ -25,6 +27,28 @@ const UserSchema = new Schema({
     type: String,
     required: [true, "password field cannot be empty"],
     select: false,
+  },
+  followers: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      select: false,
+    },
+  ],
+  following: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      select: false,
+    },
+  ],
+  profileImg: {
+    type: String,
+    default: "default.jpg",
+  },
+  private: {
+    type: Boolean,
+    default: false,
   },
 });
 UserSchema.pre("save", function (next) {
