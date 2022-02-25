@@ -6,11 +6,17 @@ const PostSchema = new Schema(
       type: mongoose.Schema.Types.ObjectId,
       required: [true, "Post owner cannot be empty"],
     },
-    post: {
+    photos: [
+      {
+        type: String,
+        required: [true, "photos cannot be empty"],
+      },
+    ],
+    description: {
       type: String,
-      required: true,
+      required: [true, "description cannot be empty"],
     },
-    likes: [{ type: mongoose.Schema.Types.ObjectId }],
+    likes: [{ type: mongoose.Schema.Types.ObjectId, select: false }],
   },
   { timestamps: true }
 );

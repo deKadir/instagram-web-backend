@@ -36,52 +36,45 @@ export const getUserInfo = asyncErrorWrapper(async (req, res, next) => {
 });
 
 export const getFollowers = asyncErrorWrapper(async (req, res, next) => {
-  const { id } = req.params;
-  const currentUser = req.body.id;
-  await User.findById(id)
+  const { userId } = req.params;
+  await User.findById(userId)
     .select("followers")
     .then((user) => {
-      if (!user.private || user.followers.includes(currentUser)) {
-        res.json({
-          error: false,
-          message: user.followers || [],
-        });
-      } else {
-        res.json({
-          error: false,
-          message: [],
-        });
-      }
+      res.json({
+        error: false,
+        message: user.followers || [],
+      });
     })
     .catch((err) => next(new Error(err.message)));
 });
 
 export const getFollowings = asyncErrorWrapper(async (req, res, next) => {
-  const { id } = req.params;
-  const currentUser = req.body.id;
-  await User.findById(id)
+  const { userId } = req.params;
+  await User.findById(userId)
     .populate("followers")
     .populate("following")
 
     .then((user) => {
-      if (!user.private || user.followers.includes(currentUser)) {
-        res.json({
-          error: false,
-          message: user.followings || [],
-        });
-      } else {
-        res.json({
-          error: false,
-          message: [],
-        });
-      }
+      res.json({
+        error: false,
+        message: user.followings || [],
+      });
     })
     .catch((err) => next(new Error(err.message)));
 });
 export const updateUserInfo = asyncErrorWrapper(async (req, res, next) => {
-  const data = req.body;
-  const userId = req.user.id;
-  await User.findByIdAndUpdate(userId, data).then(() =>
+  const { name, username, privateStatus, profileImg, password, email, phone } =
+    req.body;
+  const id = req.user.id;
+  await User.findByIdAndUpdate(id, {
+    name,
+    username,
+    privateStatus,
+    profileImg,
+    password,
+    email,
+    phone,
+  }).then(() =>
     res.json({
       error: false,
       message: "successful",

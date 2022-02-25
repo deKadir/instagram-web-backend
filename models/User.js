@@ -46,7 +46,7 @@ const UserSchema = new Schema({
     type: String,
     default: "default.jpg",
   },
-  private: {
+  privateStatus: {
     type: Boolean,
     default: false,
   },
