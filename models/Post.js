@@ -5,6 +5,7 @@ const PostSchema = new Schema(
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       required: [true, "Post owner cannot be empty"],
+      ref: "User",
     },
     photos: [
       {
@@ -16,7 +17,9 @@ const PostSchema = new Schema(
       type: String,
       required: [true, "description cannot be empty"],
     },
-    likes: [{ type: mongoose.Schema.Types.ObjectId, select: false }],
+    likes: [
+      { type: mongoose.Schema.Types.ObjectId, select: false, ref: "User" },
+    ],
   },
   { timestamps: true }
 );
