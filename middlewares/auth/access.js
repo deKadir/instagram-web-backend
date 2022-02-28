@@ -17,11 +17,11 @@ export const loginCheck = asyncErrorWrapper(async (req, res, next) => {
 export const accessUserDetails = asyncErrorWrapper(async (req, res, next) => {
   const { userId } = req.params;
   const currentUser = req.user.id;
-  await User.findOne({ id: userId })
-    .populate("followers")
+  await User.findById(userId)
+    .populate("followers", "_id")
     .then((user) => {
       if (
-        user.followers.includes(currentUser) ||
+        user.followers.find((u) => u._id.toString() === currentUser) ||
         !user.privateStatus ||
         userId === currentUser
       ) {
@@ -30,7 +30,9 @@ export const accessUserDetails = asyncErrorWrapper(async (req, res, next) => {
         res.status(403).json({
           error: true,
           message: "you have no access to view this page",
+          data: [],
         });
       }
-    });
+    })
+    .catch(() => next(new Error("User not found")));
 });

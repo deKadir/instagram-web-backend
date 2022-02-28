@@ -2,14 +2,22 @@ import User from "../models/User";
 import asyncErrorWrapper from "express-async-error-wrapper";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-export const login = asyncErrorWrapper(async (req, res, next) => {
-  const { username, password } = req.body;
+import { validateEmail } from "../helpers/validate";
 
-  const user = await User.findOne({ username }).select("+password");
-  if (!user) {
-    next(new Error("User not found"));
+export const login = asyncErrorWrapper(async (req, res, next) => {
+  const loginReq = req.body;
+  let query;
+  if (validateEmail(loginReq.username)) {
+    query = { email: loginReq.username };
+  } else {
+    query = { username: loginReq.username };
   }
-  bcrypt.compare(password, user.password, function (err, result) {
+
+  const user = await User.findOne(query).select("+password");
+  if (!user) {
+    return next(new Error("User not found"));
+  }
+  bcrypt.compare(loginReq.password, user.password, function (err, result) {
     if (err) {
       next(new Error(err.message));
     } else {
@@ -28,7 +36,7 @@ export const login = asyncErrorWrapper(async (req, res, next) => {
         });
       } else {
         res.status(400).json({
-          error: false,
+          error: true,
           message: "login failed, wrong password",
         });
       }
@@ -37,26 +45,23 @@ export const login = asyncErrorWrapper(async (req, res, next) => {
 });
 
 export const register = asyncErrorWrapper(async (req, res, next) => {
-  const { email, phone, username, password, name } = req.body;
-  if (!email && !phone) {
-    next(new Error("please provide email or phone number"));
-  } else {
-    const user = await User.create({
-      email,
-      phone,
-      username,
-      password,
-      name,
-    }).catch((error) => {
-      next(new Error(error.message, error.code));
-    });
-    let token = jwt.sign({ data: { id: user.id } }, process.env.JWT_SECRET, {
-      expiresIn: process.env.JWT_EXPIRE,
-    });
-    res.status(201).json({
-      error: false,
-      message: "registered successfully",
-      token,
-    });
-  }
+  const { email, username, password, name } = req.body;
+
+  const user = await User.create({
+    email,
+    username,
+    password,
+    name,
+  }).catch((error) => {
+    return next(new Error(error.message, error.code));
+  });
+
+  let token = jwt.sign({ data: { id: user.id } }, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRE,
+  });
+  res.status(201).json({
+    error: false,
+    message: "registered successfully",
+    token,
+  });
 });

@@ -1,22 +1,23 @@
 import mongoose from "mongoose";
 import bcrypt from "bcrypt";
 const { Schema } = mongoose;
+import { validateEmail } from "../helpers/validate";
 const UserSchema = new Schema({
   name: {
     type: String,
     required: [true, "Name field cannot be empty"],
   },
-  phone: {
+  bio: {
     type: String,
-    unique: true,
-    sparse: true,
-    select: false,
+    default: "",
   },
   email: {
     type: String,
     unique: true,
     sparse: true,
     select: false,
+    lowercase: true,
+    validate: [validateEmail, "Please provide a valid email address"],
   },
   username: {
     type: String,

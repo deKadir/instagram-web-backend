@@ -6,6 +6,7 @@ export const addPost = asyncErrorWrapper(async (req, res, next) => {
   const userId = req.user.id;
   const { description } = req.body;
   const photos = req.files.map((photo) => photo.filename);
+
   await Post.create({ userId, description, photos }).then(() => {
     res.json({
       error: false,
@@ -25,6 +26,7 @@ export const getPost = asyncErrorWrapper(async (req, res, next) => {
 });
 export const getUserPosts = asyncErrorWrapper(async (req, res, next) => {
   await Post.find({ userId: req.params.userId })
+    .select("likes photos ")
     .then((posts) => {
       res.json({
         error: false,
@@ -34,3 +36,4 @@ export const getUserPosts = asyncErrorWrapper(async (req, res, next) => {
     .catch(() => next(new Error("User not found")));
 });
 export const likePost = asyncErrorWrapper(async (req, res, next) => {});
+export const deletePost = asyncErrorWrapper(async (req, res, next) => {});

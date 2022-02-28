@@ -3,11 +3,16 @@ import "dotenv/config";
 import { connectToDb } from "./helpers/connectToDb.js";
 import routers from "./routers/index.js";
 import errorHandle from "./middlewares/errors/errorHandle";
+import cors from "cors";
+
 //server
 const app = express();
 
 //parser for express
 app.use(express.json());
+
+//cors
+app.use(cors());
 
 app.use(routers);
 app.get("/", (req, res) => {
