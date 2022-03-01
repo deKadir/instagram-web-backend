@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import bcrypt from "bcrypt";
 const { Schema } = mongoose;
-import { validateEmail } from "../helpers/validate";
+import { validateEmail, validateUsername } from "../helpers/validate";
 const UserSchema = new Schema({
   name: {
     type: String,
@@ -22,6 +22,7 @@ const UserSchema = new Schema({
   username: {
     type: String,
     required: [true, "username field cannot be empty"],
+    validate: [validateUsername, "Please provide valid username"],
     unique: true,
   },
   password: {

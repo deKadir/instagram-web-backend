@@ -1,6 +1,7 @@
 import User from "../models/User";
 import asyncErrorWrapper from "express-async-error-wrapper";
 import Post from "../models/Post";
+import Follow from "../models/Follow";
 export const follow = asyncErrorWrapper(async (req, res, next) => {
   const { userId } = req.params;
   const activeUserId = req.user.id;
@@ -8,59 +9,41 @@ export const follow = asyncErrorWrapper(async (req, res, next) => {
   if (userId === activeUserId) {
     return next(new Error("you cannot follow yourself"));
   }
-  const user = await User.findOne({
-    _id: activeUserId,
-    following: { $in: [userId] },
-  })
-    .populate("following", "username")
-    .catch((e) => next(new Error(e.message)));
-
-  if (user) {
-    user.following.pull(userId);
-    user.save();
-    await User.findByIdAndUpdate(userId, {
-      $pull: { followers: activeUserId },
-    }).catch((e) => next(new Error(e.message)));
+  const isFollowing = await Follow.findOne({
+    follower: activeUserId,
+    following: userId,
+  }).catch((e) => {});
+  if (isFollowing) {
+    isFollowing.remove();
+    isFollowing.save();
     res.json({
       error: false,
       message: "unfollow",
-      data: user.following,
     });
   } else {
-    const u = await User.findByIdAndUpdate(
-      activeUserId,
-      {
-        $push: { following: userId },
-      },
-      { new: true }
-    )
-      .populate("following", "username")
-      .catch((e) => next(new Error(e.message)));
-    await User.findByIdAndUpdate(userId, {
-      $push: { followers: activeUserId },
-    }).catch((e) => next(new Error(e.message)));
+    await Follow.create({ follower: activeUserId, following: userId });
     res.json({
       error: false,
       message: "follow",
-      data: u.following,
     });
   }
 });
 
 export const getUserInfo = asyncErrorWrapper(async (req, res, next) => {
   const { username } = req.params;
-  const user = await User.findOne({ username })
-    .populate("followers")
-    .populate("following");
+  const user = await User.findOne({ username }).catch((e) => {});
   if (user) {
     const posts = await Post.count({ userId: user.id });
+    const followers = await Follow.count({ following: user.id });
+    const following = await Follow.count({ follower: user.id });
+
     res.json({
       error: false,
       message: "success",
       data: {
         ...user.toObject(),
-        followers: user.followers.length,
-        following: user.following.length,
+        followers,
+        following,
         posts,
       },
     });
@@ -75,13 +58,13 @@ export const getUserInfo = asyncErrorWrapper(async (req, res, next) => {
 
 export const getFollowers = asyncErrorWrapper(async (req, res, next) => {
   const { userId } = req.params;
-  await User.findById(userId)
-    .populate("followers", "username name profileImg")
-    .then((user) => {
+  await Follow.find({ following: userId })
+    .populate("follower", "profileImg username name ")
+    .then((followers) => {
       res.json({
         error: false,
         message: " success",
-        data: user.followers || [],
+        data: followers || [],
       });
     })
     .catch((err) => next(new Error("user not found")));
@@ -89,14 +72,15 @@ export const getFollowers = asyncErrorWrapper(async (req, res, next) => {
 
 export const getFollowings = asyncErrorWrapper(async (req, res, next) => {
   const { userId } = req.params;
-  await User.findById(userId)
+
+  Follow.find({ follower: userId })
     .populate("following", "name username profileImg")
 
-    .then((user) => {
+    .then((following) => {
       res.json({
         error: false,
         message: "success",
-        data: user.following || [],
+        data: following || [],
       });
     })
     .catch((err) => next(new Error("user not found")));
@@ -118,8 +102,6 @@ export const updateUserInfo = asyncErrorWrapper(async (req, res, next) => {
     { new: true }
   )
     .select("+email +phone")
-    .populate("following", "username")
-    .populate("followers", "username")
     .catch((err) => next(new Error(err.message)));
   res.json({
     error: false,
@@ -129,14 +111,13 @@ export const updateUserInfo = asyncErrorWrapper(async (req, res, next) => {
 });
 export const getCurrentUser = asyncErrorWrapper(async (req, res, next) => {
   const id = req.user.id;
-  const user = await User.findById(id)
-    .select("+email +phone")
-    .populate("following", "username")
-    .populate("followers", "username");
+  const user = await User.findById(id).select("+email +phone");
   const posts = await Post.count({ userId: id });
+  const followers = await Follow.count({ following: id });
+  const following = await Follow.count({ follower: id });
   res.status(200).json({
     error: false,
     message: "success",
-    data: { ...user.toObject(), posts },
+    data: { ...user.toObject(), posts, followers, following },
   });
 });

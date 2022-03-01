@@ -5,3 +5,8 @@ export var validateEmail = function (email) {
 export var isNumber = function (value) {
   return /^\d+$/.test(value);
 };
+export function validateUsername(username) {
+  const res = /^[a-z0-9_\.]+$/.exec(username);
+  const valid = !!res;
+  return valid;
+}

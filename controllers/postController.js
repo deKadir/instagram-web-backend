@@ -1,6 +1,7 @@
 import Post from "../models/Post.js";
 import User from "../models/User.js";
 import asyncErrorWrapper from "express-async-error-wrapper";
+import Follow from "../models/Follow.js";
 
 export const addPost = asyncErrorWrapper(async (req, res, next) => {
   const userId = req.user.id;
@@ -51,11 +52,11 @@ export const postFeed = asyncErrorWrapper(async (req, res, next) => {
   const limit = Number(req.query.limit);
   var startIndex = Number(parseInt(page) - 1) * Number(limit);
   var endIndex = Number(page) * Number(limit);
-  const followings = await User.findById(activeUserId).populate(
-    "following",
-    "_id"
+  const followings = await Follow.find({ follower: activeUserId }).select(
+    "followings._id"
   );
-  const posts = await Post.find({ userId: { $in: followings.following } })
+  console.log(followings);
+  const posts = await Post.find({ userId: { $in: followings } })
     .sort({ createdAt: -1 })
     .skip(startIndex)
     .limit(limit)
