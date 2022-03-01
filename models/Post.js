@@ -17,8 +17,10 @@ const PostSchema = new Schema(
       type: String,
       required: [true, "description cannot be empty"],
     },
-    likes: [
-      { type: mongoose.Schema.Types.ObjectId, select: false, ref: "User" },
+    tags: [
+      {
+        type: String,
+      },
     ],
   },
   { timestamps: true }
