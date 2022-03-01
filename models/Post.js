@@ -17,6 +17,7 @@ const PostSchema = new Schema(
       type: String,
       required: [true, "description cannot be empty"],
     },
+
     tags: [
       {
         type: String,
