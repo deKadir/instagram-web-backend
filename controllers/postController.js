@@ -18,6 +18,7 @@ export const addPost = asyncErrorWrapper(async (req, res, next) => {
 });
 export const getPost = asyncErrorWrapper(async (req, res, next) => {
   await Post.findById(req.params.id)
+    .populate("userId", "username profileImg")
     .then((post) =>
       res.json({
         error: false,
@@ -27,27 +28,38 @@ export const getPost = asyncErrorWrapper(async (req, res, next) => {
     .catch((res) => next(new Error("Post not found")));
 });
 export const getUserPosts = asyncErrorWrapper(async (req, res, next) => {
+  const page = req.query.page;
+  const limit = req.query.limit;
+  const startIndex = (page - 1) * limit;
+  // const endIndex = page * limit;
   await Post.find({ userId: req.params.userId })
+    .skip(startIndex)
+    .limit(limit)
     .select("likes photos ")
     .then((posts) => {
       res.json({
         error: false,
         data: posts,
+        next: page + 1,
       });
     })
     .catch(() => next(new Error("Post not found")));
 });
 export const postFeed = asyncErrorWrapper(async (req, res, next) => {
   const activeUserId = req.user.id;
+  const page = Number(req.query.page);
+  const limit = Number(req.query.limit);
+  var startIndex = Number(parseInt(page) - 1) * Number(limit);
+  var endIndex = Number(page) * Number(limit);
   const followings = await User.findById(activeUserId).populate(
     "following",
     "_id"
   );
-
-  const posts = await Post.find({ userId: { $in: [followings] } }).populate(
-    "userId",
-    "username profileImg"
-  );
+  const posts = await Post.find({ userId: { $in: followings.following } })
+    .sort({ createdAt: -1 })
+    .skip(startIndex)
+    .limit(limit)
+    .populate("userId", "username profileImg");
 
   res.json({
     error: false,
