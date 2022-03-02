@@ -1,7 +1,7 @@
 import Post from "../models/Post.js";
 import User from "../models/User.js";
 import asyncErrorWrapper from "express-async-error-wrapper";
-
+import Comment from "../models/Comment";
 export const addPost = asyncErrorWrapper(async (req, res, next) => {
   const userId = req.user.id;
   const { description } = req.body;
@@ -68,6 +68,15 @@ export const postFeed = asyncErrorWrapper(async (req, res, next) => {
         as: "likeCount",
       },
     },
+    {
+      $lookup: {
+        from: "comments",
+        localField: "_id",
+        foreignField: "postId",
+        as: "commentCount",
+      },
+    },
+    { $addFields: { commentCount: { $size: "$commentCount" } } },
     { $addFields: { likeCount: { $size: "$likeCount" } } },
     { $sort: { createdAt: -1 } },
     { $limit: limit },

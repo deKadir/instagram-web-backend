@@ -13,7 +13,7 @@ import { accessUserDetails, loginCheck } from "../middlewares/auth/access";
 import multer from "multer";
 const upload = multer({ dest: "uploads/" });
 const router = express.Router();
-router.get("/getUserInfo/:username", getUserInfo);
+router.get("/getUserInfo/:username", loginCheck, getUserInfo);
 router.get("/getCurrentUser", loginCheck, getCurrentUser);
 router.post("/follow/:userId", loginCheck, follow);
 router.post("/edit", loginCheck, updateUserInfo);

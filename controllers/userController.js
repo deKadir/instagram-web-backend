@@ -1,108 +1,182 @@
 import User from "../models/User";
 import asyncErrorWrapper from "express-async-error-wrapper";
-import Post from "../models/Post";
+
 import mongoose from "mongoose";
+import Follow from "../models/Follow";
 export const follow = asyncErrorWrapper(async (req, res, next) => {
   const { userId } = req.params;
   const activeUserId = req.user.id;
-
   if (userId === activeUserId) {
     return next(new Error("you cannot follow yourself"));
   }
-  const user = await User.findOne({
-    _id: activeUserId,
-    following: { $in: [userId] },
-  })
-    .populate("following", "username")
-    .catch((e) => next(new Error(e.message)));
-
-  if (user) {
-    user.following.pull(userId);
-    user.save();
-    await User.findByIdAndUpdate(userId, {
-      $pull: { followers: activeUserId },
-    }).catch((e) => next(new Error(e.message)));
-    res.json({
+  const following = await Follow.findOne({
+    follower: activeUserId,
+    following: userId,
+  }).catch(() => {});
+  if (following) {
+    await following.remove();
+    res.status(200).json({
       error: false,
       message: "unfollow",
-      data: user.following,
+      data: null,
     });
   } else {
-    const u = await User.findByIdAndUpdate(
-      activeUserId,
-      {
-        $push: { following: userId },
-      },
-      { new: true }
-    )
-      .populate("following", "username")
-      .catch((e) => next(new Error(e.message)));
-    await User.findByIdAndUpdate(userId, {
-      $push: { followers: activeUserId },
-    }).catch((e) => next(new Error(e.message)));
-    res.json({
-      error: false,
-      message: "follow",
-      data: u.following,
-    });
+    await Follow.create({ following: userId, follower: activeUserId }).then(
+      (result) => {
+        res.status(200).json({
+          error: false,
+          message: "follow",
+          data: result,
+        });
+      }
+    );
   }
 });
 
 export const getUserInfo = asyncErrorWrapper(async (req, res, next) => {
   const { username } = req.params;
-  const user = await User.findOne({ username })
-    .populate("followers")
-    .populate("following")
-    .catch(() => {});
-  if (user) {
-    const posts = await Post.count({ userId: user.id });
-
-    res.json({
-      error: false,
-      message: "success",
-      data: {
-        ...user.toObject(),
-        followers: user.followers.length,
-        following: user.following.length,
-        posts,
+  const activeUserId = req.user.id;
+  const user = await User.aggregate([
+    { $match: { username } },
+    {
+      $lookup: {
+        from: "follows",
+        localField: "_id",
+        foreignField: "follower",
+        as: "following",
       },
-    });
-  } else {
-    res.json({
-      error: true,
-      message: "user not found",
-      data: {},
-    });
-  }
+    },
+    { $addFields: { following: { $size: "$following" } } },
+    {
+      $lookup: {
+        from: "follows",
+        localField: "_id",
+        foreignField: "following",
+        as: "followers",
+      },
+    },
+    { $addFields: { followers: { $size: "$followers" } } },
+    {
+      $lookup: {
+        from: "posts",
+        localField: "_id",
+        foreignField: "userId",
+        as: "posts",
+      },
+    },
+    { $addFields: { posts: { $size: "$posts" } } },
+    {
+      $lookup: {
+        from: "follows",
+        localField: "_id",
+        foreignField: "following",
+        as: "isFollowing",
+      },
+    },
+    {
+      $addFields: {
+        isFollowing: {
+          $size: {
+            $filter: {
+              input: "$isFollowing",
+              as: "f",
+              cond: {
+                $eq: ["$$f.follower", mongoose.Types.ObjectId(activeUserId)],
+              },
+            },
+          },
+        },
+      },
+    },
+    { $unset: ["password", "email"] },
+  ]).catch(() => {
+    return next(new Error("User not found"));
+  });
+  res.json({
+    error: false,
+    message: "success",
+    data: user[0],
+  });
 });
 
 export const getFollowers = asyncErrorWrapper(async (req, res, next) => {
   const { userId } = req.params;
-  await User.findById(userId)
-    .populate("followers", "username name profileImg")
-    .then((user) => {
-      res.json({
-        error: false,
-        message: " success",
-        data: user.followers || [],
-      });
-    })
-    .catch((err) => next(new Error("user not found")));
+  const activeUserId = req.user.id;
+  const followers = await Follow.aggregate([
+    { $match: { following: mongoose.Types.ObjectId(userId) } },
+    {
+      $lookup: {
+        from: "follows",
+        localField: "follower",
+        foreignField: "following",
+        as: "isFollowing",
+      },
+    },
+    {
+      $addFields: {
+        isFollowing: {
+          $size: {
+            $filter: {
+              input: "$isFollowing",
+              as: "f",
+              cond: {
+                $eq: ["$$f.follower", mongoose.Types.ObjectId(activeUserId)],
+              },
+            },
+          },
+        },
+      },
+    },
+  ]);
+  await Follow.populate(followers, {
+    path: "following",
+    select: "profileImg name username",
+  });
+  res.json({
+    error: false,
+    message: " success",
+    followers: followers || [],
+  });
 });
 
 export const getFollowings = asyncErrorWrapper(async (req, res, next) => {
   const { userId } = req.params;
-  await User.findById(userId)
-    .populate("following", "name username profileImg")
-
-    .then((user) => {
-      res.json({
-        error: false,
-        message: "success",
-        data: user.following || [],
-      });
-    })
-    .catch((err) => next(new Error("user not found")));
+  const activeUserId = req.user.id;
+  const followings = await Follow.aggregate([
+    { $match: { follower: mongoose.Types.ObjectId(userId) } },
+    {
+      $lookup: {
+        from: "follows",
+        localField: "following",
+        foreignField: "following",
+        as: "isFollowing",
+      },
+    },
+    {
+      $addFields: {
+        isFollowing: {
+          $size: {
+            $filter: {
+              input: "$isFollowing",
+              as: "f",
+              cond: {
+                $eq: ["$$f.follower", mongoose.Types.ObjectId(activeUserId)],
+              },
+            },
+          },
+        },
+      },
+    },
+  ]);
+  await Follow.populate(followings, {
+    path: "following",
+    select: "username profileImg name",
+  });
+  res.json({
+    error: false,
+    message: " success",
+    data: followings || [],
+  });
 });
 export const updateUserInfo = asyncErrorWrapper(async (req, res, next) => {
   const { name, username, privateStatus, profileImg, email, bio } = req.body;
@@ -120,8 +194,6 @@ export const updateUserInfo = asyncErrorWrapper(async (req, res, next) => {
     { new: true }
   )
     .select("+email +phone")
-    .populate("following", "username")
-    .populate("followers", "username")
     .catch((err) => next(new Error(err.message)));
   res.json({
     error: false,
@@ -131,15 +203,42 @@ export const updateUserInfo = asyncErrorWrapper(async (req, res, next) => {
 });
 export const getCurrentUser = asyncErrorWrapper(async (req, res, next) => {
   const id = req.user.id;
-  const user = await User.findById(id)
-    .select("+email +phone")
-    .populate("following", "username")
-    .populate("followers", "username");
-  const posts = await Post.count({ userId: id });
+  const user = await User.aggregate([
+    { $match: { _id: mongoose.Types.ObjectId(id) } },
+    {
+      $lookup: {
+        from: "follows",
+        localField: "_id",
+        foreignField: "follower",
+        as: "following",
+      },
+    },
+    { $addFields: { following: { $size: "$following" } } },
+    {
+      $lookup: {
+        from: "follows",
+        localField: "_id",
+        foreignField: "following",
+        as: "followers",
+      },
+    },
+    { $addFields: { followers: { $size: "$followers" } } },
+    {
+      $lookup: {
+        from: "posts",
+        localField: "_id",
+        foreignField: "userId",
+        as: "posts",
+      },
+    },
+    { $addFields: { posts: { $size: "$posts" } } },
+    { $unset: ["password", "email"] },
+  ]);
+
   res.status(200).json({
     error: false,
     message: "success",
-    data: { ...user.toObject(), posts },
+    data: user[0],
   });
 });
 
