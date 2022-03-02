@@ -1,6 +1,7 @@
 import User from "../models/User";
 import asyncErrorWrapper from "express-async-error-wrapper";
 import Post from "../models/Post";
+import e from "express";
 export const follow = asyncErrorWrapper(async (req, res, next) => {
   const { userId } = req.params;
   const activeUserId = req.user.id;
@@ -104,7 +105,6 @@ export const getFollowings = asyncErrorWrapper(async (req, res, next) => {
 export const updateUserInfo = asyncErrorWrapper(async (req, res, next) => {
   const { name, username, privateStatus, profileImg, email, bio } = req.body;
   const id = req.user.id;
-
   const user = await User.findByIdAndUpdate(
     id,
     {
@@ -139,4 +139,21 @@ export const getCurrentUser = asyncErrorWrapper(async (req, res, next) => {
     message: "success",
     data: { ...user.toObject(), posts },
   });
+});
+
+export const updateProfileImg = asyncErrorWrapper(async (req, res, next) => {
+  const profileImg = req.file.filename;
+  await User.findByIdAndUpdate(
+    req.user.id,
+    {
+      profileImg: profileImg,
+    },
+    { new: true }
+  )
+    .then(() =>
+      res.json({
+        profileImg,
+      })
+    )
+    .catch((e) => next(new Error("upload failed" + e.message)));
 });
