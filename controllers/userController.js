@@ -1,7 +1,7 @@
 import User from "../models/User";
 import asyncErrorWrapper from "express-async-error-wrapper";
 import Post from "../models/Post";
-import e from "express";
+import mongoose from "mongoose";
 export const follow = asyncErrorWrapper(async (req, res, next) => {
   const { userId } = req.params;
   const activeUserId = req.user.id;
@@ -52,9 +52,11 @@ export const getUserInfo = asyncErrorWrapper(async (req, res, next) => {
   const { username } = req.params;
   const user = await User.findOne({ username })
     .populate("followers")
-    .populate("following");
+    .populate("following")
+    .catch(() => {});
   if (user) {
     const posts = await Post.count({ userId: user.id });
+
     res.json({
       error: false,
       message: "success",

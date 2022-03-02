@@ -3,7 +3,7 @@ const { Schema } = mongoose;
 const PostSchema = new Schema(
   {
     userId: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: mongoose.Schema.ObjectId,
       required: [true, "Post owner cannot be empty"],
       ref: "User",
     },
@@ -21,6 +21,13 @@ const PostSchema = new Schema(
     tags: [
       {
         type: String,
+      },
+    ],
+    likes: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "User",
+        select: false,
       },
     ],
   },

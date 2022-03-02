@@ -50,16 +50,33 @@ export const postFeed = asyncErrorWrapper(async (req, res, next) => {
   const page = Number(req.query.page);
   const limit = Number(req.query.limit);
   var startIndex = Number(parseInt(page) - 1) * Number(limit);
-  var endIndex = Number(page) * Number(limit);
   const followings = await User.findById(activeUserId).populate(
     "following",
     "_id"
   );
-  const posts = await Post.find({ userId: { $in: followings.following } })
-    .sort({ createdAt: -1 })
-    .skip(startIndex)
-    .limit(limit)
-    .populate("userId", "username profileImg");
+  const posts = await Post.aggregate([
+    {
+      $match: {
+        userId: { $in: followings.following },
+      },
+    },
+    {
+      $lookup: {
+        from: "likes",
+        localField: "_id",
+        foreignField: "id",
+        as: "likeCount",
+      },
+    },
+    { $addFields: { likeCount: { $size: "$likeCount" } } },
+    { $sort: { createdAt: -1 } },
+    { $limit: limit },
+    { $skip: startIndex },
+  ]);
+  await Post.populate(posts, {
+    path: "userId",
+    select: "username profileImg ",
+  });
 
   res.json({
     error: false,
