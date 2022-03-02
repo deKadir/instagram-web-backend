@@ -3,9 +3,10 @@ const { Schema } = mongoose;
 
 const CommentSchema = new Schema(
   {
-    userId: {
+    owner: {
       type: mongoose.Schema.Types.ObjectId,
       required: [true, "Comment owner cannot be empty"],
+      ref: "User",
     },
     comment: {
       type: String,
@@ -19,6 +20,7 @@ const CommentSchema = new Schema(
     likes: [
       {
         type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
       },
     ],
   },

@@ -6,4 +6,15 @@ const LikeSchema = new Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
   },
+  id: {
+    type: Schema.Types.ObjectId,
+    refPath: "type",
+    required: true,
+  },
+  type: {
+    type: String,
+    required: true,
+    enum: ["Post", "Comment"],
+  },
 });
+export default mongoose.model("Like", LikeSchema);
