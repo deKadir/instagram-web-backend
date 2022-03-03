@@ -16,6 +16,7 @@ export const addComment = asyncErrorWrapper(async (req, res, next) => {
 
 export const getPostComments = asyncErrorWrapper(async (req, res, next) => {
   const { id } = req.params;
+
   await Comment.find({ postId: id })
     .populate("owner", "username profileImg")
     .sort({ createdAt: -1 })

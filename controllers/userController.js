@@ -232,9 +232,8 @@ export const getCurrentUser = asyncErrorWrapper(async (req, res, next) => {
       },
     },
     { $addFields: { posts: { $size: "$posts" } } },
-    { $unset: ["password", "email"] },
+    { $unset: ["password"] },
   ]);
-
   res.status(200).json({
     error: false,
     message: "success",

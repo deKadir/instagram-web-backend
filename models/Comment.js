@@ -17,12 +17,6 @@ const CommentSchema = new Schema(
       required: [true, "Comment post cannot be empty"],
       ref: "Post",
     },
-    likes: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-      },
-    ],
   },
   { timestamps: true }
 );

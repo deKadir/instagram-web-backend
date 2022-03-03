@@ -73,6 +73,7 @@ export const getPostLikes = asyncErrorWrapper(async (req, res, next) => {
   await Like.populate(likes, {
     path: "user",
     select: "username profileImg name",
+    
   });
   res.status(200).json({
     error: false,

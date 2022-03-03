@@ -1,9 +1,12 @@
 import Post from "../models/Post.js";
 import User from "../models/User.js";
 import asyncErrorWrapper from "express-async-error-wrapper";
-import Comment from "../models/Comment";
+
+import mongoose from "mongoose";
+
 export const addPost = asyncErrorWrapper(async (req, res, next) => {
   const userId = req.user.id;
+
   const { description } = req.body;
   const photos = req.files.map((photo) => photo.filename);
 
@@ -17,15 +20,53 @@ export const addPost = asyncErrorWrapper(async (req, res, next) => {
     .catch((e) => next(new Error("error" + e.message)));
 });
 export const getPost = asyncErrorWrapper(async (req, res, next) => {
-  await Post.findById(req.params.id)
-    .populate("userId", "username profileImg")
-    .then((post) =>
-      res.json({
-        error: false,
-        data: post,
-      })
-    )
-    .catch((res) => next(new Error("Post not found")));
+  const post = await Post.aggregate([
+    { $match: { _id: mongoose.Types.ObjectId(req.params.id) } },
+    {
+      $lookup: {
+        from: "likes",
+        localField: "_id",
+        foreignField: "id",
+        as: "likeCount",
+      },
+    },
+    {
+      $addFields: {
+        likeCount: {
+          $size: "$likeCount",
+        },
+      },
+    },
+    {
+      $lookup: {
+        from: "likes",
+        localField: "_id",
+        foreignField: "id",
+        as: "liked",
+      },
+    },
+    {
+      $addFields: {
+        liked: {
+          $size: {
+            $filter: {
+              input: "$liked",
+              as: "l",
+              cond: {
+                $eq: ["$$l.user", mongoose.Types.ObjectId(req.user.id)],
+              },
+            },
+          },
+        },
+      },
+    },
+  ]);
+
+  await Post.populate(post, { path: "userId", select: "username profileImg" });
+  res.json({
+    error: false,
+    data: post[0],
+  });
 });
 export const getUserPosts = asyncErrorWrapper(async (req, res, next) => {
   const page = req.query.page;
@@ -76,12 +117,37 @@ export const postFeed = asyncErrorWrapper(async (req, res, next) => {
         as: "commentCount",
       },
     },
+
+    {
+      $lookup: {
+        from: "likes",
+        localField: "_id",
+        foreignField: "id",
+        as: "liked",
+      },
+    },
+    {
+      $addFields: {
+        liked: {
+          $size: {
+            $filter: {
+              input: "$liked",
+              as: "l",
+              cond: {
+                $eq: ["$$l.user", mongoose.Types.ObjectId(activeUserId)],
+              },
+            },
+          },
+        },
+      },
+    },
     { $addFields: { commentCount: { $size: "$commentCount" } } },
     { $addFields: { likeCount: { $size: "$likeCount" } } },
     { $sort: { createdAt: -1 } },
     { $limit: limit },
     { $skip: startIndex },
   ]);
+
   await Post.populate(posts, {
     path: "userId",
     select: "username profileImg ",
