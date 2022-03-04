@@ -6,6 +6,7 @@ import Follow from "../models/Follow";
 export const follow = asyncErrorWrapper(async (req, res, next) => {
   const { userId } = req.params;
   const activeUserId = req.user.id;
+  //cannot follow yourself
   if (userId === activeUserId) {
     return next(new Error("you cannot follow yourself"));
   }
@@ -13,7 +14,9 @@ export const follow = asyncErrorWrapper(async (req, res, next) => {
     follower: activeUserId,
     following: userId,
   }).catch(() => {});
+
   if (following) {
+    //already following then unfollow
     await following.remove();
     res.status(200).json({
       error: false,
@@ -21,6 +24,7 @@ export const follow = asyncErrorWrapper(async (req, res, next) => {
       data: null,
     });
   } else {
+    //not following. follow
     await Follow.create({ following: userId, follower: activeUserId }).then(
       (result) => {
         res.status(200).json({
@@ -129,7 +133,7 @@ export const getFollowers = asyncErrorWrapper(async (req, res, next) => {
     },
   ]);
   await Follow.populate(followers, {
-    path: "following",
+    path: "follower",
     select: "profileImg name username",
   });
   res.json({

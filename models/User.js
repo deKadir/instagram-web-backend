@@ -30,20 +30,6 @@ const UserSchema = new Schema({
     required: [true, "password field cannot be empty"],
     select: false,
   },
-  followers: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      select: false,
-    },
-  ],
-  following: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      select: false,
-    },
-  ],
   profileImg: {
     type: String,
     default: "default.jpg",

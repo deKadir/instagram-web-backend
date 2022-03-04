@@ -73,18 +73,53 @@ export const getUserPosts = asyncErrorWrapper(async (req, res, next) => {
   const limit = req.query.limit;
   const startIndex = (page - 1) * limit;
   // const endIndex = page * limit;
-  await Post.find({ userId: req.params.userId })
-    .skip(startIndex)
-    .limit(limit)
-    .select("likes photos ")
-    .then((posts) => {
-      res.json({
-        error: false,
-        data: posts,
-        next: page + 1,
-      });
-    })
-    .catch(() => next(new Error("Post not found")));
+  const posts = await Post.aggregate([
+    { $match: { userId: mongoose.Types.ObjectId(req.params.userId) } },
+    {
+      $lookup: {
+        from: "likes",
+        localField: "_id",
+        foreignField: "id",
+        as: "posts",
+      },
+    },
+    {
+      $addFields: {
+        likeCount: { $size: "$posts" },
+      },
+    },
+    {
+      $lookup: {
+        from: "comments",
+        localField: "_id",
+        foreignField: "postId",
+        as: "comments",
+      },
+    },
+    {
+      $addFields: {
+        commentCount: {
+          $size: "$comments",
+        },
+      },
+    },
+    {
+      $skip: startIndex,
+    },
+    { $limit: Number(limit) },
+    {
+      $project: {
+        photos: 1,
+        likeCount: 1,
+        commentCount: 1,
+      },
+    },
+  ]);
+  res.json({
+    error: false,
+    data: posts,
+    next: page + 1,
+  });
 });
 export const postFeed = asyncErrorWrapper(async (req, res, next) => {
   const activeUserId = req.user.id;
