@@ -1,8 +1,8 @@
 import User from "../models/User.js";
 import asyncErrorWrapper from "express-async-error-wrapper";
+import Follow from "../models/Follow.js";
 
 import mongoose from "mongoose";
-import Follow from "../models/Follow";
 export const follow = asyncErrorWrapper(async (req, res, next) => {
   const { userId } = req.params;
   const activeUserId = req.user.id;
