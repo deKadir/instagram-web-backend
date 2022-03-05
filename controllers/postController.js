@@ -126,7 +126,6 @@ export const postFeed = asyncErrorWrapper(async (req, res, next) => {
   const page = Number(req.query.page);
   const limit = Number(req.query.limit);
   var startIndex = Number(parseInt(page) - 1) * Number(limit);
-
   const posts = await Post.aggregate([
     {
       $lookup: {
@@ -187,8 +186,8 @@ export const postFeed = asyncErrorWrapper(async (req, res, next) => {
     { $addFields: { commentCount: { $size: "$commentCount" } } },
     { $addFields: { likeCount: { $size: "$likeCount" } } },
     { $sort: { createdAt: -1 } },
-    { $limit: limit },
     { $skip: startIndex },
+    { $limit: limit },
     { $unset: "relationship" },
   ]);
 
