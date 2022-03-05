@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import bcrypt from "bcrypt";
 const { Schema } = mongoose;
-import { validateEmail, validateUsername } from "../helpers/validate";
+import { validateEmail, validateUsername } from "../helpers/validate.js";
 const UserSchema = new Schema({
   name: {
     type: String,
