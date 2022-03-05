@@ -1,5 +1,5 @@
 import Post from "../models/Post.js";
-import User from "../models/User.js";
+import Follow from "../models/Follow.js";
 import asyncErrorWrapper from "express-async-error-wrapper";
 
 import mongoose from "mongoose";
@@ -126,15 +126,15 @@ export const postFeed = asyncErrorWrapper(async (req, res, next) => {
   const page = Number(req.query.page);
   const limit = Number(req.query.limit);
   var startIndex = Number(parseInt(page) - 1) * Number(limit);
-  const followings = await User.findById(activeUserId).populate(
-    "following",
-    "_id"
-  );
+
+  let followings = await Follow.aggregate([
+    { $match: { follower: mongoose.Types.ObjectId(activeUserId) } },
+    { $project: { following: 1 } },
+  ]);
+  followings = followings.map((f) => f.following);
   const posts = await Post.aggregate([
     {
-      $match: {
-        userId: { $in: followings.following },
-      },
+      $match: { userId: { $in: followings } },
     },
     {
       $lookup: {
