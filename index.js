@@ -2,7 +2,7 @@ import express from "express";
 import "dotenv/config";
 import { connectToDb } from "./helpers/connectToDb.js";
 import routers from "./routers/index.js";
-import errorHandle from "./middlewares/errors/errorHandle";
+import errorHandle from "./middlewares/errors/errorHandle.js";
 import cors from "cors";
 
 //server
