@@ -3,6 +3,7 @@ import asyncErrorWrapper from "express-async-error-wrapper";
 import Follow from "../models/Follow.js";
 
 import mongoose from "mongoose";
+import bcrypt from "bcrypt";
 export const follow = asyncErrorWrapper(async (req, res, next) => {
   const { userId } = req.params;
   const activeUserId = req.user.id;
@@ -260,4 +261,29 @@ export const updateProfileImg = asyncErrorWrapper(async (req, res, next) => {
       })
     )
     .catch((e) => next(new Error("upload failed" + e.message)));
+});
+
+export const changePassword = asyncErrorWrapper(async (req, res, next) => {
+  const { currentPassword, newPassword } = req.body;
+  const userId = req.user.id;
+  let user = await User.findById(userId)
+    .select("+password")
+    .catch(() => {
+      return next(new Error("user not found"));
+    });
+  bcrypt.compare(currentPassword, user.password, (err, result) => {
+    if (err) {
+      return next(new Error(err.message));
+    }
+    if (!result) {
+      return next(new Error("current password is wrong"));
+    } else {
+      user.password = newPassword;
+      user.save();
+      res.status(200).json({
+        error: false,
+        message: "password is updated",
+      });
+    }
+  });
 });

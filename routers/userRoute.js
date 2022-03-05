@@ -8,6 +8,7 @@ import {
   getFollowings,
   updateUserInfo,
   updateProfileImg,
+  changePassword,
 } from "../controllers/userController.js";
 import { accessUserDetails, loginCheck } from "../middlewares/auth/access.js";
 import multer from "multer";
@@ -35,5 +36,6 @@ router.post(
   upload.single("profileImg"),
   updateProfileImg
 );
+router.post("/changePassword", loginCheck, changePassword);
 
 export default router;
