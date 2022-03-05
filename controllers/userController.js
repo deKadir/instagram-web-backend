@@ -287,3 +287,15 @@ export const changePassword = asyncErrorWrapper(async (req, res, next) => {
     }
   });
 });
+
+export const searchUser = asyncErrorWrapper(async (req, res, next) => {
+  await User.find({ username: { $regex: req.query.username } })
+    .limit(8)
+    .select("profileImg username name ")
+    .then((result) => {
+      res.status(200).json({
+        error: false,
+        users: result,
+      });
+    });
+});

@@ -22,6 +22,6 @@ connectToDb();
 
 app.use(errorHandle);
 
-app.listen(process.env.PORT, () => {
+app.listen(process.env.PORT || 3004, () => {
   console.log(`Server started running on port ${process.env.PORT}`);
 });

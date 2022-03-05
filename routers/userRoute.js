@@ -9,6 +9,7 @@ import {
   updateUserInfo,
   updateProfileImg,
   changePassword,
+  searchUser,
 } from "../controllers/userController.js";
 import { accessUserDetails, loginCheck } from "../middlewares/auth/access.js";
 import multer from "multer";
@@ -37,5 +38,5 @@ router.post(
   updateProfileImg
 );
 router.post("/changePassword", loginCheck, changePassword);
-
+router.get("/searchUser", loginCheck, searchUser);
 export default router;
