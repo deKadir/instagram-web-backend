@@ -4,7 +4,7 @@ const router = express.Router();
 import authRoute from "./authRoute.js";
 import userRoute from "./userRoute.js";
 import postRoute from "./postRoute.js";
-import likeRoute from "./likeRoute";
+import likeRoute from "./likeRoute.js";
 import commentRoute from "./commentRoute.js";
 router.use("/api/auth", authRoute);
 router.use("/api/user", userRoute);

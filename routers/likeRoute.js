@@ -1,5 +1,5 @@
 import express from "express";
-import { loginCheck } from "./../middlewares/auth/access";
+import { loginCheck } from "./../middlewares/auth/access.js";
 import {
   getPostLikes,
   getCommentLikes,

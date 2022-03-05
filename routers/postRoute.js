@@ -1,11 +1,11 @@
 import express from "express";
-import { accessUserDetails, loginCheck } from "./../middlewares/auth/access";
+import { accessUserDetails, loginCheck } from "./../middlewares/auth/access.js";
 import {
   addPost,
   getPost,
   getUserPosts,
   postFeed,
-} from "./../controllers/postController";
+} from "./../controllers/postController.js";
 import multer from "multer";
 const upload = multer({ dest: "uploads/" });
 const router = express.Router();

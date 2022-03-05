@@ -1,7 +1,10 @@
 import express from "express";
-import { addComment, getPostComments } from "../controllers/commentController";
-import { loginCheck } from "../middlewares/auth/access";
-import { likeComment } from "./../controllers/likeController";
+import {
+  addComment,
+  getPostComments,
+} from "../controllers/commentController.js";
+import { loginCheck } from "../middlewares/auth/access.js";
+import { likeComment } from "./../controllers/likeController.js";
 const router = express.Router();
 
 router.post("/add", loginCheck, addComment);

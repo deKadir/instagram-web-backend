@@ -1,5 +1,4 @@
 import Post from "../models/Post.js";
-import Follow from "../models/Follow.js";
 import asyncErrorWrapper from "express-async-error-wrapper";
 
 import mongoose from "mongoose";

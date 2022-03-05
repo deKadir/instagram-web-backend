@@ -1,5 +1,5 @@
 import asyncErrorWrapper from "express-async-error-wrapper";
-import Like from "../models/Like";
+import Like from "../models/Like.js";
 import mongoose from "mongoose";
 export const likeComment = asyncErrorWrapper(async (req, res, next) => {
   const { commentId } = req.params;
@@ -73,7 +73,6 @@ export const getPostLikes = asyncErrorWrapper(async (req, res, next) => {
   await Like.populate(likes, {
     path: "user",
     select: "username profileImg name",
-    
   });
   res.status(200).json({
     error: false,

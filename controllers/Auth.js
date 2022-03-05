@@ -1,8 +1,8 @@
-import User from "../models/User";
+import User from "../models/User.js";
 import asyncErrorWrapper from "express-async-error-wrapper";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { validateEmail } from "../helpers/validate";
+import { validateEmail } from "../helpers/validate.js";
 
 export const login = asyncErrorWrapper(async (req, res, next) => {
   const loginReq = req.body;

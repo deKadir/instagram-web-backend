@@ -8,8 +8,8 @@ import {
   getFollowings,
   updateUserInfo,
   updateProfileImg,
-} from "../controllers/UserController";
-import { accessUserDetails, loginCheck } from "../middlewares/auth/access";
+} from "../controllers/userController.js";
+import { accessUserDetails, loginCheck } from "../middlewares/auth/access.js";
 import multer from "multer";
 const upload = multer({ dest: "uploads/" });
 const router = express.Router();
