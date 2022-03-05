@@ -1,7 +1,6 @@
 import jwt from "jsonwebtoken";
 import asyncErrorWrapper from "express-async-error-wrapper";
-import User from "../../models/User";
-import Follow from "../../models/Follow";
+
 export const loginCheck = asyncErrorWrapper(async (req, res, next) => {
   const token = req.headers.authorization?.split(" ")[1];
 
