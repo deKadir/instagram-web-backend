@@ -127,14 +127,22 @@ export const postFeed = asyncErrorWrapper(async (req, res, next) => {
   const limit = Number(req.query.limit);
   var startIndex = Number(parseInt(page) - 1) * Number(limit);
 
-  let followings = await Follow.aggregate([
-    { $match: { follower: mongoose.Types.ObjectId(activeUserId) } },
-    { $project: { following: 1 } },
-  ]);
-  followings = followings.map((f) => f.following);
   const posts = await Post.aggregate([
     {
-      $match: { userId: { $in: followings } },
+      $lookup: {
+        from: "follows",
+        localField: "userId",
+        foreignField: "following",
+        as: "relationship",
+      },
+    },
+    {
+      $match: {
+        $or: [
+          { "relationship.follower": mongoose.Types.ObjectId(activeUserId) },
+          { userId: mongoose.Types.ObjectId(activeUserId) },
+        ],
+      },
     },
     {
       $lookup: {
@@ -181,6 +189,7 @@ export const postFeed = asyncErrorWrapper(async (req, res, next) => {
     { $sort: { createdAt: -1 } },
     { $limit: limit },
     { $skip: startIndex },
+    { $unset: "relationship" },
   ]);
 
   await Post.populate(posts, {
