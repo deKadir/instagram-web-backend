@@ -5,7 +5,7 @@ import {
   getCommentLikes,
   likePost,
   likeComment,
-} from "../controllers/likeController";
+} from "../controllers/likeController.js";
 const router = express.Router();
 
 router.get("/postLikes/:postId", loginCheck, getPostLikes);
