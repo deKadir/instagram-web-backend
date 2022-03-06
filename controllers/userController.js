@@ -1,9 +1,10 @@
 import User from "../models/User.js";
 import asyncErrorWrapper from "express-async-error-wrapper";
 import Follow from "../models/Follow.js";
-
 import mongoose from "mongoose";
 import bcrypt from "bcrypt";
+import Post from "../models/Post.js";
+import { sendMail } from "../helpers/mail.js";
 export const follow = asyncErrorWrapper(async (req, res, next) => {
   const { userId } = req.params;
   const activeUserId = req.user.id;
@@ -93,7 +94,19 @@ export const getUserInfo = asyncErrorWrapper(async (req, res, next) => {
         },
       },
     },
-    { $unset: ["password", "email"] },
+    {
+      $project: {
+        name: 1,
+        bio: 1,
+        username: 1,
+        followers: 1,
+        following: 1,
+        profileImg: 1,
+        privateStatus: 1,
+        posts: 1,
+        isFollowing: 1,
+      },
+    },
   ]).catch(() => {
     return next(new Error("User not found"));
   });
@@ -299,3 +312,110 @@ export const searchUser = asyncErrorWrapper(async (req, res, next) => {
       });
     });
 });
+
+export const savePost = asyncErrorWrapper(async (req, res, next) => {
+  const post = await Post.findById(req.params.postId).select("saved");
+  if (post.saved.includes(req.user.id)) {
+    await post.saved.pull(req.user.id);
+    await post.save();
+    res.json({
+      error: false,
+      message: "unsave",
+    });
+  } else {
+    await post.saved.push(req.user.id);
+    await post.save();
+    res.json({
+      error: false,
+      message: "save",
+    });
+  }
+});
+
+export const getSavedPosts = asyncErrorWrapper(async (req, res, next) => {
+  const posts = await Post.aggregate([
+    {
+      $match: { saved: mongoose.Types.ObjectId(req.user.id) },
+    },
+
+    {
+      $lookup: {
+        from: "likes",
+        localField: "_id",
+        foreignField: "id",
+        as: "liked",
+      },
+    },
+    {
+      $addFields: {
+        likeCount: {
+          $size: "$liked",
+        },
+      },
+    },
+    {
+      $lookup: {
+        from: "comments",
+        localField: "_id",
+        foreignField: "postId",
+        as: "comments",
+      },
+    },
+    {
+      $addFields: {
+        commentCount: {
+          $size: "$comments",
+        },
+      },
+    },
+    {
+      $project: {
+        photos: 1,
+        likeCount: 1,
+        commentCount: 1,
+      },
+    },
+  ]);
+
+  res.json({
+    error: false,
+    posts: posts,
+  });
+});
+
+export const sendVerificationCode = asyncErrorWrapper(
+  async (req, res, next) => {
+    const verificationCode = Math.floor(Math.random() * 10000);
+    const u = await User.findOneAndUpdate(
+      { email: req.query.mail },
+      {
+        verificationCode,
+      }
+    ).catch((e) => next(new Error("user not found")));
+
+    if (u) {
+      await sendMail(
+        req.query.mail,
+        "verification code",
+        verificationCode.toString()
+      )
+        .then(() => {
+          res.json({
+            error: false,
+            message: "verification code submitted. check your email",
+          });
+        })
+        .catch((e) =>
+          res.json({
+            error: true,
+            message: `error: ${e.message}`,
+          })
+        );
+    } else {
+      res.json({
+        error: true,
+        message: "no user found with this email",
+      });
+    }
+  }
+);

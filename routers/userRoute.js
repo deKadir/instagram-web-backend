@@ -10,6 +10,9 @@ import {
   updateProfileImg,
   changePassword,
   searchUser,
+  savePost,
+  getSavedPosts,
+  sendVerificationCode,
 } from "../controllers/userController.js";
 import { accessUserDetails, loginCheck } from "../middlewares/auth/access.js";
 import multer from "multer";
@@ -39,4 +42,7 @@ router.post(
 );
 router.post("/changePassword", loginCheck, changePassword);
 router.get("/searchUser", loginCheck, searchUser);
+router.post("/savePost/:postId", loginCheck, savePost);
+router.get("/getSavedPosts", loginCheck, getSavedPosts);
+router.get("/sendVerificationCode", sendVerificationCode);
 export default router;

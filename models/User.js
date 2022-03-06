@@ -38,6 +38,11 @@ const UserSchema = new Schema({
     type: Boolean,
     default: false,
   },
+  savedPosts: [{ type: mongoose.Types.ObjectId, select: false, ref: "Post" }],
+  verificationCode: {
+    type: String,
+    select: false,
+  },
 });
 UserSchema.pre("save", function (next) {
   if (this.isModified("password")) {

@@ -123,6 +123,7 @@ export const getUserPosts = asyncErrorWrapper(async (req, res, next) => {
 export const postFeed = asyncErrorWrapper(async (req, res, next) => {
   const activeUserId = req.user.id;
   const page = Number(req.query.page);
+
   const limit = Number(req.query.limit);
   var startIndex = Number(parseInt(page) - 1) * Number(limit);
   const posts = await Post.aggregate([
@@ -182,12 +183,45 @@ export const postFeed = asyncErrorWrapper(async (req, res, next) => {
         },
       },
     },
+    {
+      $lookup: {
+        from: "users",
+        localField: "saved",
+        foreignField: "_id",
+        as: "savers",
+      },
+    },
+    {
+      $addFields: {
+        isSaved: {
+          $size: {
+            $filter: {
+              input: "$savers",
+              as: "saver",
+              cond: {
+                $eq: ["$$saver._id", mongoose.Types.ObjectId(activeUserId)],
+              },
+            },
+          },
+        },
+      },
+    },
     { $addFields: { commentCount: { $size: "$commentCount" } } },
     { $addFields: { likeCount: { $size: "$likeCount" } } },
     { $sort: { createdAt: -1 } },
     { $skip: startIndex },
     { $limit: limit },
-    { $unset: "relationship" },
+    {
+      $project: {
+        userId: 1,
+        photos: 1,
+        description: 1,
+        likeCount: 1,
+        commentCount: 1,
+        liked: 1,
+        isSaved: 1,
+      },
+    },
   ]);
 
   await Post.populate(posts, {
@@ -244,6 +278,3 @@ export const explorePosts = asyncErrorWrapper(async (req, res, next) => {
     posts,
   });
 });
-
-export const likePost = asyncErrorWrapper(async (req, res, next) => {});
-export const deletePost = asyncErrorWrapper(async (req, res, next) => {});

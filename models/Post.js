@@ -23,6 +23,12 @@ const PostSchema = new Schema(
         type: String,
       },
     ],
+    saved: [
+      {
+        type: mongoose.Types.ObjectId,
+        select: false,
+      },
+    ],
   },
   { timestamps: true }
 );
