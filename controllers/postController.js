@@ -201,5 +201,49 @@ export const postFeed = asyncErrorWrapper(async (req, res, next) => {
     data: posts,
   });
 });
+
+export const explorePosts = asyncErrorWrapper(async (req, res, next) => {
+  const page = Number(req.query.page);
+  const limit = Number(req.query.limit);
+  var startIndex = Number(parseInt(page) - 1) * Number(limit);
+  const posts = await Post.aggregate([
+    {
+      $lookup: {
+        from: "likes",
+        localField: "_id",
+        foreignField: "id",
+        as: "likeCount",
+      },
+    },
+    {
+      $addFields: { likeCount: { $size: "$likeCount" } },
+    },
+    {
+      $lookup: {
+        from: "comments",
+        localField: "_id",
+        foreignField: "postId",
+        as: "comments",
+      },
+    },
+    {
+      $addFields: { commentCount: { $size: "$comments" } },
+    },
+    { $skip: startIndex },
+    { $limit: limit },
+    {
+      $project: {
+        photos: 1,
+        likeCount: 1,
+        commentCount: 1,
+      },
+    },
+  ]);
+  res.json({
+    error: false,
+    posts,
+  });
+});
+
 export const likePost = asyncErrorWrapper(async (req, res, next) => {});
 export const deletePost = asyncErrorWrapper(async (req, res, next) => {});
