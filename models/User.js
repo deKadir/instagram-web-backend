@@ -39,10 +39,6 @@ const UserSchema = new Schema({
     default: false,
   },
   savedPosts: [{ type: mongoose.Types.ObjectId, select: false, ref: "Post" }],
-  verificationCode: {
-    type: String,
-    select: false,
-  },
 });
 UserSchema.pre("save", function (next) {
   if (this.isModified("password")) {
@@ -58,4 +54,5 @@ UserSchema.pre("save", function (next) {
     next();
   }
 });
+
 export default mongoose.model("User", UserSchema);

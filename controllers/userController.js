@@ -5,6 +5,7 @@ import mongoose from "mongoose";
 import bcrypt from "bcrypt";
 import Post from "../models/Post.js";
 import { sendMail } from "../helpers/mail.js";
+import jwt from "jsonwebtoken";
 export const follow = asyncErrorWrapper(async (req, res, next) => {
   const { userId } = req.params;
   const activeUserId = req.user.id;
@@ -385,19 +386,18 @@ export const getSavedPosts = asyncErrorWrapper(async (req, res, next) => {
 
 export const sendVerificationCode = asyncErrorWrapper(
   async (req, res, next) => {
-    const verificationCode = Math.floor(Math.random() * 10000);
-    const u = await User.findOneAndUpdate(
-      { email: req.query.mail },
-      {
-        verificationCode,
-      }
-    ).catch((e) => next(new Error("user not found")));
+    const u = await User.findOne({ email: req.query.mail }).catch((e) =>
+      next(new Error("user not found"))
+    );
 
     if (u) {
+      let token = jwt.sign({ data: { id: u._id } }, process.env.JWT_SECRET, {
+        expiresIn: process.env.JWT_EXPIRE,
+      });
       await sendMail(
         req.query.mail,
-        "verification code",
-        verificationCode.toString()
+        "verification link",
+        `${process.env.BASE_URL}/reset-password/${token}`
       )
         .then(() => {
           res.json({
@@ -419,3 +419,27 @@ export const sendVerificationCode = asyncErrorWrapper(
     }
   }
 );
+export const resetPassword = asyncErrorWrapper(async (req, res, next) => {
+  jwt.verify(req.query.token, process.env.JWT_SECRET, (err, decoded) => {
+    if (err) {
+      next(new Error(`token error: ${err.message}`));
+    }
+  });
+  let userId = jwt.decode(req.query.token).data.id;
+  let u = await User.findById(userId)
+    .select("password")
+    .catch(() => {
+      res.json({
+        error: true,
+        message: "user not found ",
+      });
+    });
+  if (u) {
+    u.password = req.body.password;
+    await u.save();
+  }
+  res.json({
+    error: false,
+    message: "password changed successfully",
+  });
+});

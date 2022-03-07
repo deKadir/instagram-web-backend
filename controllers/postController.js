@@ -1,6 +1,5 @@
 import Post from "../models/Post.js";
 import asyncErrorWrapper from "express-async-error-wrapper";
-
 import mongoose from "mongoose";
 
 export const addPost = asyncErrorWrapper(async (req, res, next) => {

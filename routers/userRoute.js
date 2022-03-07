@@ -13,6 +13,7 @@ import {
   savePost,
   getSavedPosts,
   sendVerificationCode,
+  resetPassword,
 } from "../controllers/userController.js";
 import { accessUserDetails, loginCheck } from "../middlewares/auth/access.js";
 import multer from "multer";
@@ -45,4 +46,5 @@ router.get("/searchUser", loginCheck, searchUser);
 router.post("/savePost/:postId", loginCheck, savePost);
 router.get("/getSavedPosts", loginCheck, getSavedPosts);
 router.get("/sendVerificationCode", sendVerificationCode);
+router.post("/reset-password", resetPassword);
 export default router;
