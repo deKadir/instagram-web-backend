@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import asyncErrorWrapper from "express-async-error-wrapper";
+import Room from "../../models/Room.js";
 
 export const loginCheck = asyncErrorWrapper(async (req, res, next) => {
   const token = req.headers.authorization?.split(" ")[1];
@@ -25,4 +26,16 @@ export const accessUserDetails = asyncErrorWrapper(async (req, res, next) => {
   //       message: "you have no access to view this page",
   //     });
   //   });
+});
+export const accessMessages = asyncErrorWrapper(async (req, res, next) => {
+  const room = await Room.findOne({
+    users: { $in: req.user.id },
+    _id: req.query.room,
+  });
+
+  if (room) {
+    next();
+  } else {
+    return next(new Error("you have no access to view this room"));
+  }
 });

@@ -4,6 +4,10 @@ import { connectToDb } from "./helpers/connectToDb.js";
 import routers from "./routers/index.js";
 import errorHandle from "./middlewares/errors/errorHandle.js";
 import cors from "cors";
+import { createServer } from "http";
+import { Server } from "socket.io";
+import path from "path";
+var __dirname = path.resolve();
 
 //server
 const app = express();
@@ -14,14 +18,29 @@ app.use(express.json());
 //cors
 app.use(cors());
 
+//socket
+const server = createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: true,
+    credentials: true,
+  },
+});
+io.on("connection", (socket) => {
+  socket.on("chat", (message) => {
+    io.emit("chat", message);
+    console.log(message);
+  });
+});
+//routes
 app.use(routers);
 app.get("/", (req, res) => {
-  res.send("Server is running...");
+  res.sendFile(__dirname + "/index.html");
 });
 connectToDb();
 
 app.use(errorHandle);
 
-app.listen(process.env.PORT || 3004, () => {
+server.listen(process.env.PORT || 3004, () => {
   console.log(`Server started running on port ${process.env.PORT}`);
 });

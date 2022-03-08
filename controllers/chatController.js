@@ -4,7 +4,6 @@ import Room from "../models/Room.js";
 import mongoose from "mongoose";
 export const sendMessage = asyncErrorWrapper(async (req, res, next) => {
   const { text, roomId } = req.body;
-
   await Message.create({
     text,
     sender: req.user.id,
@@ -70,4 +69,24 @@ export const getRooms = asyncErrorWrapper(async (req, res, next) => {
     error: false,
     rooms,
   });
+});
+export const getRoom = asyncErrorWrapper(async (req, res, next) => {
+  const room = await Room.findOne({
+    users: { $all: [req.user.id, req.query.userId] },
+  }).catch(() => {});
+  if (room) {
+    res.json({
+      error: false,
+      room,
+    });
+  } else {
+    await Room.create({ users: [req.user.id, req.query.userId] }).then(
+      (result) => {
+        res.json({
+          error: false,
+          room: result,
+        });
+      }
+    );
+  }
 });
