@@ -26,7 +26,7 @@ export const likeComment = asyncErrorWrapper(async (req, res, next) => {
 export const likePost = asyncErrorWrapper(async (req, res, next) => {
   const { postId } = req.params;
   const user = req.user.id;
-  const like = await Like.findOne({ user, id: postId }).catch(() => {
+  const like = await Like.findOne({ user, id: postId }).catch(async () => {
     await Like.create({ user, type: "Post", id: postId }).then((like) =>
       res.status(200).json({
         error: false,
