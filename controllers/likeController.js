@@ -19,7 +19,6 @@ export const likeComment = asyncErrorWrapper(async (req, res, next) => {
       res.status(200).json({
         error: false,
         message: "like",
-        like,
       })
     );
   }
@@ -40,7 +39,6 @@ export const likePost = asyncErrorWrapper(async (req, res, next) => {
       res.status(200).json({
         error: false,
         message: "like",
-        like,
       })
     );
   }
