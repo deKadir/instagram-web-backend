@@ -106,6 +106,7 @@ export const getUserInfo = asyncErrorWrapper(async (req, res, next) => {
         privateStatus: 1,
         posts: 1,
         isFollowing: 1,
+        verified: 1,
       },
     },
   ]).catch(() => {

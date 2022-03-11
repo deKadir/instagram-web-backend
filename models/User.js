@@ -38,6 +38,10 @@ const UserSchema = new Schema({
     type: Boolean,
     default: false,
   },
+  verified: {
+    type: Boolean,
+    default: false,
+  },
   savedPosts: [{ type: mongoose.Types.ObjectId, select: false, ref: "Post" }],
 });
 UserSchema.pre("save", function (next) {

@@ -60,7 +60,10 @@ export const getPost = asyncErrorWrapper(async (req, res, next) => {
     },
   ]);
 
-  await Post.populate(post, { path: "userId", select: "username profileImg" });
+  await Post.populate(post, {
+    path: "userId",
+    select: "username profileImg verified",
+  });
   res.json({
     error: false,
     data: post[0],
@@ -225,7 +228,7 @@ export const postFeed = asyncErrorWrapper(async (req, res, next) => {
 
   await Post.populate(posts, {
     path: "userId",
-    select: "username profileImg ",
+    select: "username profileImg verified",
   });
 
   res.json({
