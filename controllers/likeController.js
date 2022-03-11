@@ -4,7 +4,9 @@ import mongoose from "mongoose";
 export const likeComment = asyncErrorWrapper(async (req, res, next) => {
   const { commentId } = req.params;
   const user = req.user.id;
-  const like = await Like.findOne({ user, id: commentId });
+  const like = await Like.findOne({ user, id: commentId }).catch(
+    (e) => () => {}
+  );
   if (like) {
     like.remove();
     like.save();
