@@ -26,7 +26,14 @@ export const likeComment = asyncErrorWrapper(async (req, res, next) => {
 export const likePost = asyncErrorWrapper(async (req, res, next) => {
   const { postId } = req.params;
   const user = req.user.id;
-  const like = await Like.findOne({ user, id: postId }).catch(() => {});
+  const like = await Like.findOne({ user, id: postId }).catch(() => {
+    await Like.create({ user, type: "Post", id: postId }).then((like) =>
+      res.status(200).json({
+        error: false,
+        message: "like",
+      })
+    );
+  });
   if (like) {
     like.remove();
     like.save();
@@ -34,13 +41,6 @@ export const likePost = asyncErrorWrapper(async (req, res, next) => {
       error: false,
       message: "unlike",
     });
-  } else {
-    await Like.create({ user, type: "Post", id: postId }).then((like) =>
-      res.status(200).json({
-        error: false,
-        message: "like",
-      })
-    );
   }
 });
 export const getPostLikes = asyncErrorWrapper(async (req, res, next) => {
