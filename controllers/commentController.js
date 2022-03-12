@@ -18,7 +18,7 @@ export const getPostComments = asyncErrorWrapper(async (req, res, next) => {
   const { id } = req.params;
 
   await Comment.find({ postId: id })
-    .populate("owner", "username profileImg")
+    .populate("owner", "username profileImg verified")
     .sort({ createdAt: -1 })
     .then((comments) => res.json({ error: false, comments }))
     .catch(() => next(new Error("post not found")));
